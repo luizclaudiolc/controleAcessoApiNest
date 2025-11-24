@@ -17,26 +17,29 @@ export class MoradorController {
 
   @Post()
   async create(@Body() createMoradorDto: CreateMoradorDto) {
-    return this.moradorService.create(createMoradorDto);
+    return await this.moradorService.create(createMoradorDto);
   }
 
   @Get()
-  findAll() {
-    return this.moradorService.findAll();
+  async findAll() {
+    return await this.moradorService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.moradorService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.moradorService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMoradorDto: UpdateMoradorDto) {
-    return this.moradorService.update(+id, updateMoradorDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateMoradorDto: UpdateMoradorDto,
+  ) {
+    return await this.moradorService.update(+id, updateMoradorDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.moradorService.remove(+id);
+  async remove(@Param('id') id: string) {
+    return await this.moradorService.remove(+id);
   }
 }
