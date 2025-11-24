@@ -1,26 +1,40 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMoradorDto } from './dto/create-morador.dto';
 import { UpdateMoradorDto } from './dto/update-morador.dto';
 
 @Injectable()
 export class MoradorService {
-  create(createMoradorDto: CreateMoradorDto) {
-    return 'This action adds a new morador';
+  constructor(private readonly prismaService: PrismaService) {}
+
+  async create(createMoradorDto: CreateMoradorDto) {
+    const morador = await this.prismaService.morador.create({
+      data: createMoradorDto,
+    });
+
+    return morador;
   }
 
-  findAll() {
-    return [];
+  async findAll() {
+    return await this.prismaService.morador.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} morador`;
+  async findOne(id: number) {
+    return await this.prismaService.morador.findUnique({
+      where: { id },
+    });
   }
 
-  update(id: number, updateMoradorDto: UpdateMoradorDto) {
-    return `This action updates a #${id} morador`;
+  async update(id: number, updateMoradorDto: UpdateMoradorDto) {
+    return await this.prismaService.morador.update({
+      where: { id },
+      data: updateMoradorDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} morador`;
+  async remove(id: number) {
+    return await this.prismaService.morador.delete({
+      where: { id },
+    });
   }
 }

@@ -16,7 +16,7 @@ export class MoradorController {
   constructor(private readonly moradorService: MoradorService) {}
 
   @Post()
-  create(@Body() createMoradorDto: CreateMoradorDto) {
+  async create(@Body() createMoradorDto: CreateMoradorDto) {
     return this.moradorService.create(createMoradorDto);
   }
 
