@@ -18,7 +18,74 @@ model Morador {
   nome        String
   bloco       String?
   apartamento String
+  carro       Carro[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deleteAt    DateTime?
+}
+
+model Carro {
+  id          Int        @id @default(autoincrement())
+  placa       String     @unique
+  modelo      String?
+  cor         String?
+  moradorId   Int?
+  morador     Morador?   @relation(fields: [moradorId], references: [id], onDelete: Cascade)
+  visitanteId Int?
+  visitante   Visitante? @relation(fields: [visitanteId], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deleteAt    DateTime?
+  registros   Registro[]
+}
+
+enum TipoRegistro {
+  ENTRADA
+  SAIDA
+}
+
+model Registro {
+  id              Int          @id @default(autoincrement())
+  tipo            TipoRegistro
+  carroId         Int?
+  carro           Carro?       @relation(fields: [carroId], references: [id], onDelete: SetNull)
+  placa           String?
+  visitanteId     Int?
+  visitante       Visitante?   @relation(fields: [visitanteId], references: [id], onDelete: SetNull)
+  dataHoraEntrada DateTime
+  dataHoraSaida   DateTime?
+  porteiroId      Int?
+  porteiro        Porteiro?    @relation(fields: [porteiroId], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([placa])
+  @@index([tipo])
+  @@index([porteiroId])
+  @@index([dataHoraEntrada])
+  @@index([visitanteId])
+}
+
+model Porteiro {
+  id        Int        @id @default(autoincrement())
+  nome      String
+  matricula String     @unique
+  senha     String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deleteAt  DateTime?
+  registros Registro[]
+}
+
+model Visitante {
+  id        Int        @id @default(autoincrement())
+  nome      String
+  documento String?    @unique
+  telefone  String?
+  descricao String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deleteAt  DateTime?
+  carro     Carro[]
+  registros Registro[]
 }
