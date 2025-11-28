@@ -19,138 +19,201 @@ export class MoradorService {
   async create(createMoradorDto: CreateMoradorDto) {
     const { nome, bloco, apartamento, carro, ...rest } = createMoradorDto;
 
-    if (Object.keys(createMoradorDto).includes('carro') && carro) {
-      const placa = this.normalizePlaca(carro.placa);
+    const placa = this.normalizePlaca(carro?.placa);
 
-      return await this.prismaService.morador.create({
-        data: {
-          nome,
-          bloco,
-          apartamento,
-          carro: {
-            create: {
-              ...carro,
-              placa: placa!,
-            },
-          },
-          ...rest,
-        },
-        include: {
-          carro: true,
-        },
+    if (placa) {
+      const carroExistente = await this.prismaService.carro.findUnique({
+        where: { placa },
       });
+
+      if (carroExistente) {
+        throw new BadRequestException({
+          success: false,
+          message: `Já existe um carro cadastrado com a placa ${placa}`,
+          errors: null,
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
 
-    return await this.prismaService.morador.create({
-      data: {
-        nome,
-        bloco,
-        apartamento,
-        ...rest,
-      },
-      include: {
-        carro: true,
-      },
+    if (carro) {
+      const result = await this.prismaService.$transaction(async (tx) => {
+        const morador = await tx.morador.create({
+          data: {
+            nome,
+            bloco,
+            apartamento,
+            ...rest,
+          },
+        });
+
+        const novoCarro = await tx.carro.create({
+          data: {
+            ...carro,
+            placa: placa!,
+            donoId: morador.id,
+            donoTipo: 'MORADOR',
+          },
+        });
+
+        return { ...morador, carro: [novoCarro] };
+      });
+
+      return result;
+    }
+
+    const morador = await this.prismaService.morador.create({
+      data: { nome, bloco, apartamento, ...rest },
     });
+    return { ...morador, carro: [] };
   }
 
   async findAll() {
-    return await this.prismaService.morador.findMany({
-      include: {
-        carro: true,
+    const moradores = await this.prismaService.morador.findMany();
+    const ids = moradores.map((m) => m.id);
+    const carros = await this.prismaService.carro.findMany({
+      where: {
+        donoId: { in: ids },
+        donoTipo: 'MORADOR',
       },
     });
+
+    const mapa = new Map<number, any[]>();
+    carros.forEach((c) => {
+      const ownerId = c.donoId;
+      if (ownerId === null) return;
+      if (!mapa.has(ownerId)) mapa.set(ownerId, []);
+      mapa.get(ownerId)!.push(c);
+    });
+
+    return moradores.map((m) => ({ ...m, carro: mapa.get(m.id) ?? [] }));
   }
 
   async findOne(id: number) {
-    return await this.prismaService.morador.findUnique({
-      include: { carro: true },
+    const morador = await this.prismaService.morador.findUnique({
       where: { id },
     });
+
+    if (!morador) {
+      throw new NotFoundException({
+        success: false,
+        message: `Morador com ID ${id} não encontrado`,
+        errors: null,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const carros = await this.prismaService.carro.findMany({
+      where: { donoId: id, donoTipo: 'MORADOR' },
+    });
+
+    return { ...morador, carro: carros };
   }
 
   async update(id: number, updateMoradorDto: UpdateMoradorDto) {
-    const moradorExistente = await this.prismaService.morador.findUnique({
-      where: { id },
-      include: { carro: true },
-    });
+    const { nome, bloco, apartamento, carro, ...rest } = updateMoradorDto;
 
-    if (!moradorExistente) {
-      throw new NotFoundException(`Morador com ID ${id} não encontrado`);
-    }
+    const placa = this.normalizePlaca(carro?.placa);
 
-    const { carro, ...dadosMorador } = updateMoradorDto;
-
-    if (!carro) {
-      return await this.prismaService.morador.update({
-        where: { id },
-        data: dadosMorador,
-        include: { carro: true },
+    if (carro && placa) {
+      const carrosDoMorador = await this.prismaService.carro.findMany({
+        where: { donoId: id, donoTipo: 'MORADOR' },
       });
-    }
 
-    // Processar dados do carro
-    const placaNormalizada = this.normalizePlaca(carro.placa);
+      const carroExistente = carrosDoMorador.find((c) => c.placa === placa);
 
-    if (!placaNormalizada) {
-      throw new BadRequestException('Placa não pode ser vazia');
-    }
-
-    // Verificar se a placa já existe em outro carro
-    const carroComPlaca = await this.prismaService.carro.findUnique({
-      where: { placa: placaNormalizada },
-    });
-
-    // Se encontrou um carro com a placa e ele pertence ao morador atual
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (carroComPlaca && carroComPlaca.moradorId === id) {
-      // Atualizar o carro existente do morador
-      return await this.prismaService.morador.update({
-        where: { id },
-        data: {
-          ...dadosMorador,
-          carro: {
-            update: {
-              where: { id: carroComPlaca.id },
-              data: {
-                placa: placaNormalizada,
-                modelo: carro.modelo,
-                cor: carro.cor,
-              },
+      if (carroExistente) {
+        // Atualiza carro e morador existente
+        const result = await this.prismaService.$transaction(async (tx) => {
+          const morador = await tx.morador.update({
+            where: { id },
+            data: {
+              nome,
+              bloco,
+              apartamento,
+              ...rest,
             },
-          },
-        },
-        include: { carro: true },
-      });
-    }
+          });
 
-    // Se encontrou um carro com a placa mas pertence a outro morador/visitante
-    if (carroComPlaca && carroComPlaca.moradorId !== id) {
-      throw new BadRequestException(
-        `Placa ${placaNormalizada} já está cadastrada para outro proprietário`,
+          const updatedCarro = await tx.carro.update({
+            where: { id: carroExistente.id },
+            data: {
+              ...carro,
+              placa,
+              donoId: morador.id,
+              donoTipo: 'MORADOR',
+            },
+          });
+
+          return { ...morador, carro: [updatedCarro] };
+        });
+
+        return result;
+      }
+
+      const carroPertenceAoutroDono = await this.prismaService.carro.findUnique(
+        {
+          where: { placa },
+        },
       );
+
+      if (carroPertenceAoutroDono) {
+        throw new BadRequestException({
+          success: false,
+          message: `Já existe um carro cadastrado com a placa ${placa} para outro dono.`,
+          errors: null,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Cria novo carro para o morador
+      const result = await this.prismaService.$transaction(async (tx) => {
+        const morador = await tx.morador.update({
+          where: { id },
+          data: {
+            nome,
+            bloco,
+            apartamento,
+            ...rest,
+          },
+        });
+
+        const novoCarro = await tx.carro.create({
+          data: {
+            ...carro,
+            placa,
+            donoId: morador.id,
+            donoTipo: 'MORADOR',
+          },
+        });
+
+        return { ...morador, carro: [novoCarro] };
+      });
+
+      return result;
     }
 
-    // Placa não existe: criar novo carro para o morador
-    return await this.prismaService.morador.update({
+    const morador = await this.prismaService.morador.update({
       where: { id },
-      data: {
-        ...dadosMorador,
-        carro: {
-          create: {
-            placa: placaNormalizada,
-            modelo: carro.modelo,
-            cor: carro.cor,
-          },
-        },
-      },
-      include: { carro: true },
+      data: { nome, bloco, apartamento, ...rest },
     });
+
+    const carros = await this.prismaService.carro.findMany({
+      where: { donoId: id, donoTipo: 'MORADOR' },
+    });
+
+    return { ...morador, carro: carros };
   }
 
   async remove(id: number) {
-    return await this.prismaService.morador.delete({
-      where: { id },
+    return await this.prismaService.$transaction(async (tx) => {
+      await tx.carro.deleteMany({
+        where: { donoId: id, donoTipo: 'MORADOR' },
+      });
+
+      await tx.morador.delete({
+        where: { id },
+      });
     });
   }
 }
