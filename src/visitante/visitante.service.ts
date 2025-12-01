@@ -415,35 +415,13 @@ export class VisitanteService {
         },
       });
 
-      let carroAtualizado: Carro | null = null;
-
       if (carro && placa) {
         const carroExistente = await tx.carro.findUnique({
           where: { placa },
         });
 
         if (carroExistente) {
-          if (
-            carroExistente.donoTipo === 'VISITANTE' &&
-            carroExistente.donoId === id
-          ) {
-            carroAtualizado = await tx.carro.update({
-              where: { placa },
-              data: {
-                modelo: carro.modelo || carroExistente.modelo,
-                cor: carro.cor || carroExistente.cor,
-              },
-            });
-          } else if (carroExistente.donoTipo === 'VISITANTE') {
-            carroAtualizado = await tx.carro.update({
-              where: { placa },
-              data: {
-                donoId: id,
-                modelo: carro.modelo || carroExistente.modelo,
-                cor: carro.cor || carroExistente.cor,
-              },
-            });
-          } else {
+          if (carroExistente.donoTipo === 'MORADOR') {
             throw new BadRequestException({
               success: false,
               message: `A placa ${placa} já está cadastrada para um morador`,
@@ -451,17 +429,41 @@ export class VisitanteService {
               timestamp: new Date().toISOString(),
             });
           }
-        } else {
-          carroAtualizado = await tx.carro.create({
-            data: {
-              placa,
-              modelo: carro.modelo,
-              cor: carro.cor,
-              donoId: id,
-              donoTipo: 'VISITANTE',
-            },
-          });
+
+          if (
+            carroExistente.donoTipo === 'VISITANTE' &&
+            carroExistente.donoId === id
+          ) {
+            return await tx.carro.update({
+              where: { placa },
+              data: {
+                modelo: carro.modelo || carroExistente.modelo,
+                cor: carro.cor || carroExistente.cor,
+              },
+            });
+          }
+
+          if (carroExistente.donoTipo === 'VISITANTE') {
+            return await tx.carro.update({
+              where: { placa },
+              data: {
+                donoId: id,
+                modelo: carro.modelo || carroExistente.modelo,
+                cor: carro.cor || carroExistente.cor,
+              },
+            });
+          }
         }
+
+        return await tx.carro.create({
+          data: {
+            placa,
+            modelo: carro.modelo,
+            cor: carro.cor,
+            donoId: id,
+            donoTipo: 'VISITANTE',
+          },
+        });
       }
 
       const todosCarros = await tx.carro.findMany({

@@ -86,7 +86,11 @@ export class MoradorService {
       mapa.get(ownerId)!.push(c);
     });
 
-    return moradores.map((m) => ({ ...m, carro: mapa.get(m.id) ?? [] }));
+    return moradores.map((m) => ({
+      ...m,
+      carro: mapa.get(m.id) ?? [],
+      totalMoradoresCadastrados: moradores.length,
+    }));
   }
 
   async findOne(id: number) {
