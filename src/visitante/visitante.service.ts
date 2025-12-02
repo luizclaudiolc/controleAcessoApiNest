@@ -181,7 +181,7 @@ export class VisitanteService {
       if (!registroAberto) {
         throw new BadRequestException({
           success: false,
-          message: `Não há registro de entrada em aberto para o visitante ${visitante.nome}`,
+          message: `Não há registro de ENTRADA em aberto para o visitante ${visitante.nome}`,
           errors: null,
           timestamp: new Date().toISOString(),
         });
@@ -217,7 +217,6 @@ export class VisitanteService {
       });
 
       return {
-        success: true,
         message: 'Saída registrada com sucesso',
         data: {
           ...visitante,
@@ -231,7 +230,6 @@ export class VisitanteService {
           totalVisitas: todosRegistros.filter((r) => r.dataHoraSaida !== null)
             .length,
         },
-        timestamp: new Date().toISOString(),
       };
     });
   }
