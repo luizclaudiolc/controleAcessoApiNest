@@ -8,17 +8,14 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PorteiroService } from './porteiro.service';
 import { CreatePorteiroDto } from './dto/create-morador.dto';
-import { CurrentUser } from 'src/core/auth/current-user.decorator';
-import { CurrentUserDto } from 'src/core/auth/current-user.dto';
 import { UpdatePorteiroDto } from './dto/update-morador.dto';
+import { PorteiroService } from './porteiro.service';
 
 @Controller('porteiro')
 export class PorteiroController {
   constructor(private readonly porteiroService: PorteiroService) {}
 
-  //Create
   @Post()
   @ApiTags('Porteiro')
   @ApiBody({ type: CreatePorteiroDto })
@@ -28,7 +25,6 @@ export class PorteiroController {
     return await this.porteiroService.createPorteiro(createPorteiroDto);
   }
 
-  // Get all porteiros
   @Get()
   @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Lista todos os porteiros' })
@@ -39,7 +35,6 @@ export class PorteiroController {
     return await this.porteiroService.getTodosPorteiros();
   }
 
-  // Get porteiro by ID
   @Get(':id')
   @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Obtém um porteiro pelo ID' })
@@ -66,7 +61,6 @@ export class PorteiroController {
     return await this.porteiroService.updatePorteiro(+id, updatePorteiroDto);
   }
 
-  // Delete porteiro by ID
   @Delete(':id')
   @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Deleta um porteiro pelo ID' })
