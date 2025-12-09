@@ -2,13 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { CreateCarroDto } from 'src/morador/dto/create-morador.dto';
+import { CreateCarroDto } from 'src/features/morador/dto/create-morador.dto';
 
 export enum TipoRegistroDto {
   ENTRADA = 'ENTRADA',
@@ -23,24 +22,6 @@ export class CreateRegistroDto {
     description: 'Placa do carro (caso não tenha carro cadastrado)',
   })
   placa?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @ApiPropertyOptional({
-    example: 1,
-    description: 'ID do porteiro responsável pelo registro',
-  })
-  porteiroId?: number;
-}
-
-export class RegistrarSaidaDto {
-  @IsOptional()
-  @IsNumber()
-  @ApiPropertyOptional({
-    example: 1,
-    description: 'ID do porteiro que registrou a saída',
-  })
-  porteiroId?: number;
 }
 
 export class CreateVisitanteDto {

@@ -1,20 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { VisitanteService } from './visitante.service';
-import {
-  CreateVisitanteDto,
-  RegistrarSaidaDto,
-} from './dto/create-visitante.dto';
-import { UpdateVisitanteDto } from './dto/update-visitante.dto';
-import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { CreateVisitanteDto } from './dto/create-visitante.dto';
+import { UpdateVisitanteDto } from './dto/update-visitante.dto';
+import { VisitanteService } from './visitante.service';
+import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
+import { CurrentUserDto } from 'src/core/auth/current-user.dto';
+import { CurrentUser } from 'src/core/auth/current-user.decorator';
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('visitante')
 @Controller('visitante')
 export class VisitanteController {
   constructor(private readonly visitanteService: VisitanteService) {}
@@ -22,8 +26,11 @@ export class VisitanteController {
   @ApiOperation({ summary: 'Cria um novo visitante' })
   @ApiResponse({ status: 201, description: 'Visitante criado com sucesso' })
   @Post()
-  create(@Body() createVisitanteDto: CreateVisitanteDto) {
-    return this.visitanteService.create(createVisitanteDto);
+  create(
+    @Body() createVisitanteDto: CreateVisitanteDto,
+    @CurrentUser() { id: porteiroId }: CurrentUserDto,
+  ) {
+    return this.visitanteService.create(createVisitanteDto, porteiroId);
   }
 
   @ApiOperation({ summary: 'Lista todos os visitantes' })
@@ -70,8 +77,9 @@ export class VisitanteController {
   update(
     @Param('id') id: string,
     @Body() updateVisitanteDto: UpdateVisitanteDto,
+    @CurrentUser() { id: porteiroId }: CurrentUserDto,
   ) {
-    return this.visitanteService.update(+id, updateVisitanteDto);
+    return this.visitanteService.update(+id, updateVisitanteDto, porteiroId);
   }
 
   @ApiOperation({ summary: 'Remove um visitante' })
@@ -88,18 +96,14 @@ export class VisitanteController {
   @ApiParam({ name: 'id', type: 'number', description: 'ID do visitante' })
   @ApiParam({
     name: 'body',
-    type: RegistrarSaidaDto,
     description: 'ID do porteiro que registrou a saída',
   })
   @ApiResponse({ status: 200, description: 'Saída registrada com sucesso' })
   @ApiResponse({ status: 404, description: 'Visitante não encontrado' })
   registrarSaida(
     @Param('id') id: string,
-    @Body() registrarSaidaDto: RegistrarSaidaDto,
+    @CurrentUser() { id: porteiroId }: CurrentUserDto,
   ) {
-    return this.visitanteService.registrarSaida(
-      +id,
-      registrarSaidaDto.porteiroId,
-    );
+    return this.visitanteService.registrarSaida(+id, porteiroId);
   }
 }

@@ -4,9 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Carro, Visitante } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateVisitanteDto } from './dto/create-visitante.dto';
 import { UpdateVisitanteDto } from './dto/update-visitante.dto';
+import { PrismaService } from 'src/core/prisma/prisma.service';
 
 @Injectable()
 export class VisitanteService {
@@ -17,10 +17,10 @@ export class VisitanteService {
     return p && p.length > 0 ? p : undefined;
   }
 
-  async create(createVisitanteDto: CreateVisitanteDto) {
+  async create(createVisitanteDto: CreateVisitanteDto, porteiroId: number) {
     const { nome, documento, carro, registro, ...rest } = createVisitanteDto;
     const placaCarro = this.normalizePlaca(carro?.placa);
-    const placaRegistro = this.normalizePlaca(registro.placa);
+    const placaRegistro = this.normalizePlaca(registro?.placa);
 
     return await this.prismaService.$transaction(async (tx) => {
       let visitante: Visitante | null = null;
@@ -82,12 +82,6 @@ export class VisitanteService {
               cor: carro.cor || carroExistente.cor,
             },
           });
-
-          if (carroExistente.donoId !== visitante.id) {
-            console.log(
-              `🔄 Carro ${placaCarro} transferido do visitante ID ${carroExistente.donoId} para ${visitante.id} (${visitante.nome})`,
-            );
-          }
         } else {
           carroParaUsar = await tx.carro.create({
             data: {
@@ -109,7 +103,7 @@ export class VisitanteService {
           visitanteId: visitante.id,
           dataHoraEntrada: new Date(),
           dataHoraSaida: null,
-          porteiroId: registro.porteiroId || null,
+          porteiroId,
         },
       });
 
@@ -153,7 +147,7 @@ export class VisitanteService {
     });
   }
 
-  async registrarSaida(visitanteId: number, porteiroId?: number) {
+  async registrarSaida(visitanteId: number, porteiroId: number) {
     return await this.prismaService.$transaction(async (tx) => {
       const visitante = await tx.visitante.findUnique({
         where: { id: visitanteId },
@@ -217,19 +211,16 @@ export class VisitanteService {
       });
 
       return {
-        message: 'Saída registrada com sucesso',
-        data: {
-          ...visitante,
-          registroAtual: registroAtualizado,
-          tempoPermanencia: {
-            minutos: tempoMinutos,
-            horas: Math.floor(tempoMinutos / 60),
-            formatado: `${Math.floor(tempoMinutos / 60)}h ${tempoMinutos % 60}m`,
-          },
-          historicoRegistros: todosRegistros,
-          totalVisitas: todosRegistros.filter((r) => r.dataHoraSaida !== null)
-            .length,
+        ...visitante,
+        registroAtual: registroAtualizado,
+        tempoPermanencia: {
+          minutos: tempoMinutos,
+          horas: Math.floor(tempoMinutos / 60),
+          formatado: `${Math.floor(tempoMinutos / 60)}h ${tempoMinutos % 60}m`,
         },
+        historicoRegistros: todosRegistros,
+        totalVisitas: todosRegistros.filter((r) => r.dataHoraSaida !== null)
+          .length,
       };
     });
   }
@@ -276,6 +267,7 @@ export class VisitanteService {
   async findVisitantesEmAberto() {
     const visitantes = await this.prismaService.visitante.findMany({
       where: {
+        deleteAt: null,
         registros: {
           some: {
             dataHoraSaida: null,
@@ -309,13 +301,33 @@ export class VisitanteService {
       },
     });
 
-    visitantes.forEach((v) => {
-      v['carros'] = carros.filter(({ donoId }) => donoId === v.id);
+    const visitantesFormatados = visitantes.map((v) => {
+      const registroAberto = v.registros[0];
+      console.log('Registro: ', registroAberto);
+
+      return {
+        id: v.id,
+        nome: v.nome,
+        documento: v.documento,
+        telefone: v.telefone,
+        descricao: v.descricao,
+        carros: carros.filter(({ donoId }) => donoId === v.id),
+        registroAberto: {
+          id: registroAberto.id,
+          dataHoraEntrada: registroAberto.dataHoraEntrada,
+          tipo: registroAberto.tipo,
+          placa: registroAberto.placa,
+          carro: registroAberto.carro,
+          porteiro: registroAberto.porteiro,
+        },
+        createdAt: v.createdAt,
+        updatedAt: v.updatedAt,
+      };
     });
 
     return {
-      message: `${visitantes.length} visitante(s) dentro do condomínio`,
-      data: visitantes,
+      message: `${visitantesFormatados.length} visitante(s) dentro do condomínio`,
+      data: visitantesFormatados,
     };
   }
 
@@ -324,7 +336,11 @@ export class VisitanteService {
       where: { id },
       include: {
         registros: {
+          where: {
+            dataHoraSaida: null,
+          },
           orderBy: { dataHoraEntrada: 'desc' },
+          take: 1,
           include: {
             carro: true,
             porteiro: {
@@ -356,19 +372,44 @@ export class VisitanteService {
       },
     });
 
+    const totalVisitas = await this.prismaService.registro.count({
+      where: {
+        visitanteId: id,
+        dataHoraSaida: { not: null },
+      },
+    });
+
+    const registroAberto = visitante.registros[0] || null;
+
     return {
-      ...visitante,
+      id: visitante.id,
+      nome: visitante.nome,
+      documento: visitante.documento,
+      telefone: visitante.telefone,
+      descricao: visitante.descricao,
       carros,
-      registroAberto: visitante.registros.find((r) => r.dataHoraSaida === null),
-      totalVisitas: visitante.registros.filter((r) => r.dataHoraSaida !== null)
-        .length,
-      dentroDoCondominio: visitante.registros.some(
-        (r) => r.dataHoraSaida === null,
-      ),
+      registroAberto: registroAberto
+        ? {
+            id: registroAberto.id,
+            dataHoraEntrada: registroAberto.dataHoraEntrada,
+            tipo: registroAberto.tipo,
+            placa: registroAberto.placa,
+            carro: registroAberto.carro,
+            porteiro: registroAberto.porteiro,
+          }
+        : null,
+      totalVisitas,
+      dentroDoCondominio: registroAberto !== null,
+      createdAt: visitante.createdAt,
+      updatedAt: visitante.updatedAt,
     };
   }
 
-  async update(id: number, updateVisitanteDto: UpdateVisitanteDto) {
+  async update(
+    id: number,
+    updateVisitanteDto: UpdateVisitanteDto,
+    porteiroId: number,
+  ) {
     const { nome, documento, telefone, descricao, carro } = updateVisitanteDto;
     const placa = this.normalizePlaca(carro?.placa);
 
@@ -381,6 +422,20 @@ export class VisitanteService {
         throw new NotFoundException({
           success: false,
           message: `Visitante com ID ${id} não encontrado`,
+          errors: null,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Valida se o porteiro existe
+      const porteiroExistente = await tx.porteiro.findUnique({
+        where: { id: porteiroId },
+      });
+
+      if (!porteiroExistente) {
+        throw new NotFoundException({
+          success: false,
+          message: `Porteiro com ID ${porteiroId} não encontrado`,
           errors: null,
           timestamp: new Date().toISOString(),
         });
@@ -410,6 +465,7 @@ export class VisitanteService {
             telefone !== undefined ? telefone : visitanteExistente.telefone,
           descricao:
             descricao !== undefined ? descricao : visitanteExistente.descricao,
+          ultimaAtualizacaoPor: porteiroId,
         },
       });
 
@@ -432,17 +488,15 @@ export class VisitanteService {
             carroExistente.donoTipo === 'VISITANTE' &&
             carroExistente.donoId === id
           ) {
-            return await tx.carro.update({
+            await tx.carro.update({
               where: { placa },
               data: {
                 modelo: carro.modelo || carroExistente.modelo,
                 cor: carro.cor || carroExistente.cor,
               },
             });
-          }
-
-          if (carroExistente.donoTipo === 'VISITANTE') {
-            return await tx.carro.update({
+          } else if (carroExistente.donoTipo === 'VISITANTE') {
+            await tx.carro.update({
               where: { placa },
               data: {
                 donoId: id,
@@ -451,17 +505,17 @@ export class VisitanteService {
               },
             });
           }
+        } else {
+          await tx.carro.create({
+            data: {
+              placa,
+              modelo: carro.modelo,
+              cor: carro.cor,
+              donoId: id,
+              donoTipo: 'VISITANTE',
+            },
+          });
         }
-
-        return await tx.carro.create({
-          data: {
-            placa,
-            modelo: carro.modelo,
-            cor: carro.cor,
-            donoId: id,
-            donoTipo: 'VISITANTE',
-          },
-        });
       }
 
       const todosCarros = await tx.carro.findMany({
@@ -477,6 +531,7 @@ export class VisitanteService {
         data: {
           ...visitanteAtualizado,
           carros: todosCarros,
+          porteiroResponsavel: porteiroExistente.nome,
         },
       };
     });

@@ -3,10 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMoradorDto } from './dto/create-morador.dto';
 import { UpdateMoradorDto } from './dto/update-morador.dto';
+import { Carro, Morador } from '@prisma/client';
+import { PrismaService } from 'src/core/prisma/prisma.service';
 
+export interface MoradorComCarro extends Morador {
+  carro: Carro[];
+}
+
+export interface MoradorComCarroETotal extends MoradorComCarro {
+  totalMoradoresCadastrados: number;
+}
 @Injectable()
 export class MoradorService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -16,7 +24,7 @@ export class MoradorService {
     return p && p.length > 0 ? p : undefined;
   }
 
-  async create(createMoradorDto: CreateMoradorDto) {
+  async create(createMoradorDto: CreateMoradorDto): Promise<MoradorComCarro> {
     const { nome, bloco, apartamento, carro, ...rest } = createMoradorDto;
 
     const placa = this.normalizePlaca(carro?.placa);
@@ -68,7 +76,7 @@ export class MoradorService {
     return { ...morador, carro: [] };
   }
 
-  async findAll() {
+  async findAll(): Promise<MoradorComCarroETotal[]> {
     const moradores = await this.prismaService.morador.findMany();
     const ids = moradores.map((m) => m.id);
     const carros = await this.prismaService.carro.findMany({
@@ -93,7 +101,7 @@ export class MoradorService {
     }));
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<MoradorComCarro> {
     const morador = await this.prismaService.morador.findUnique({
       where: { id },
     });
@@ -114,7 +122,10 @@ export class MoradorService {
     return { ...morador, carro: carros };
   }
 
-  async update(id: number, updateMoradorDto: UpdateMoradorDto) {
+  async update(
+    id: number,
+    updateMoradorDto: UpdateMoradorDto,
+  ): Promise<MoradorComCarro> {
     const { nome, bloco, apartamento, carro, ...rest } = updateMoradorDto;
 
     const placa = this.normalizePlaca(carro?.placa);
@@ -209,7 +220,7 @@ export class MoradorService {
     return { ...morador, carro: carros };
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<void> {
     return await this.prismaService.$transaction(async (tx) => {
       await tx.carro.deleteMany({
         where: { donoId: id, donoTipo: 'MORADOR' },

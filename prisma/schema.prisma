@@ -29,15 +29,19 @@ model Morador {
 }
 
 model Visitante {
-  id        Int        @id @default(autoincrement())
-  nome      String
-  documento String?    @unique
-  telefone  String?
-  descricao String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deleteAt  DateTime?
-  registros Registro[]
+  id                   Int        @id @default(autoincrement())
+  nome                 String
+  documento            String?    @unique
+  telefone             String?
+  descricao            String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  deleteAt             DateTime?
+  registros            Registro[]
+  ultimaAtualizacaoPor Int?
+  porteiroAtualizacao  Porteiro?  @relation("VisitanteAtualizacoes", fields: [ultimaAtualizacaoPor], references: [id])
+  porteiro             Porteiro?  @relation(fields: [porteiroId], references: [id])
+  porteiroId           Int?
 }
 
 model Carro {
@@ -80,12 +84,14 @@ model Registro {
 }
 
 model Porteiro {
-  id        Int        @id @default(autoincrement())
-  nome      String
-  matricula String     @unique
-  senha     String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deleteAt  DateTime?
-  registros Registro[]
+  id                    Int         @id @default(autoincrement())
+  nome                  String
+  matricula             String      @unique
+  senha                 String
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  deleteAt              DateTime?
+  registros             Registro[]
+  visitantes            Visitante[]
+  visitantesAtualizados Visitante[] @relation("VisitanteAtualizacoes")
 }

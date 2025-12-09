@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,7 +18,11 @@ import {
 import { CreateMoradorDto } from './dto/create-morador.dto';
 import { UpdateMoradorDto } from './dto/update-morador.dto';
 import { MoradorService } from './morador.service';
+import { CurrentUserDto } from 'src/core/auth/current-user.dto';
+import { CurrentUser } from 'src/core/auth/current-user.decorator';
+import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @ApiTags('morador')
 @Controller('morador')
 export class MoradorController {
@@ -28,7 +33,10 @@ export class MoradorController {
   @ApiBody({ type: CreateMoradorDto })
   @ApiResponse({ status: 201, description: 'Morador criado com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
-  async create(@Body() createMoradorDto: CreateMoradorDto) {
+  async create(
+    @Body() createMoradorDto: CreateMoradorDto,
+    @CurrentUser() { id, matricula, nome }: CurrentUserDto,
+  ) {
     return await this.moradorService.create(createMoradorDto);
   }
 
