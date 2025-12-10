@@ -6,13 +6,19 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreatePorteiroDto } from './dto/create-morador.dto';
 import { UpdatePorteiroDto } from './dto/update-morador.dto';
 import { PorteiroService } from './porteiro.service';
 import { Rotas } from 'src/enums/rotas.enum';
+import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
+import { ERoles } from 'src/enums/roles.enum';
+import { Roles } from 'src/core/auth/roles.decorator';
 
+@UseGuards(JwtAuthGuard)
+@Roles(ERoles.ADMIN)
 @ApiTags(Rotas.porteiro)
 @Controller(Rotas.porteiro)
 export class PorteiroController {

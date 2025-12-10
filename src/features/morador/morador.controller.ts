@@ -9,21 +9,24 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
   ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'src/core/auth/current-user.decorator';
+import { CurrentUserDto } from 'src/core/auth/current-user.dto';
+import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
+import { Roles } from 'src/core/auth/roles.decorator';
+import { ERoles } from 'src/enums/roles.enum';
+import { Rotas } from 'src/enums/rotas.enum';
 import { CreateMoradorDto } from './dto/create-morador.dto';
 import { UpdateMoradorDto } from './dto/update-morador.dto';
 import { MoradorService } from './morador.service';
-import { CurrentUserDto } from 'src/core/auth/current-user.dto';
-import { CurrentUser } from 'src/core/auth/current-user.decorator';
-import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
-import { Rotas } from 'src/enums/rotas.enum';
 
 @UseGuards(JwtAuthGuard)
+@Roles(ERoles.PORTEIRO, ERoles.ADMIN)
 @ApiTags(Rotas.moradores)
 @Controller(Rotas.moradores)
 export class MoradorController {

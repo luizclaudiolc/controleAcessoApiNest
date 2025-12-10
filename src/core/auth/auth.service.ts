@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { _hash, _salt } from '../encriptKey/encriptPassword';
 import { PrismaService } from '../prisma/prisma.service';
+import { ERoles } from 'src/enums/roles.enum';
 
 export interface IJwtPayload {
   username: string;
@@ -19,6 +20,7 @@ export interface ICreateUser {
   nome: string;
   matricula: string;
   senha: string;
+  roles: ERoles[];
 }
 
 @Injectable()
@@ -32,7 +34,7 @@ export class AuthService {
     return matricula.trim().toUpperCase();
   }
 
-  async createUser({ nome, matricula, senha }: ICreateUser) {
+  async createUser({ nome, matricula, senha, roles }: ICreateUser) {
     matricula = this.normalizaMatricula(matricula);
     const porteiroExiste = await this.prisma.porteiro.findUnique({
       where: { matricula },
@@ -57,13 +59,14 @@ export class AuthService {
         nome,
         matricula: user.matricula,
         senha: user.senha,
+        roles,
       },
     });
 
     return { ...novoPorteiro, senha: undefined };
   }
 
-  async loginUser({ matricula, senha }: Omit<ICreateUser, 'nome'>) {
+  async loginUser({ matricula, senha }: Omit<ICreateUser, 'nome' | 'roles'>) {
     matricula = this.normalizaMatricula(matricula);
     const user = await this.prisma.porteiro.findUnique({
       where: { matricula },
@@ -96,6 +99,7 @@ export class AuthService {
       sub: {
         id: user.id,
         matricula: user.matricula,
+        roles: user.roles,
       },
     };
 

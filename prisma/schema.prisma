@@ -18,6 +18,11 @@ enum TipoRegistro {
   SAIDA
 }
 
+enum Roles {
+  ADMIN
+  PORTEIRO
+}
+
 model Morador {
   id          Int       @id @default(autoincrement())
   nome        String
@@ -88,6 +93,7 @@ model Porteiro {
   nome                  String
   matricula             String      @unique
   senha                 String
+  roles                 Roles[]
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
   deleteAt              DateTime?

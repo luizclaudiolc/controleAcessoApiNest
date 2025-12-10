@@ -7,12 +7,12 @@ export class AuthController {
 
   @Post('create')
   createUser(@Body() body: ICreateUser) {
-    const { nome, matricula, senha } = body;
-    return this.authService.createUser({ nome, matricula, senha });
+    const { nome, matricula, senha, roles } = body;
+    return this.authService.createUser({ nome, matricula, senha, roles });
   }
 
   @Post('login')
-  loginUser(@Body() body: Omit<ICreateUser, 'nome'>) {
+  loginUser(@Body() body: Omit<ICreateUser, 'nome' | 'roles'>) {
     const { matricula, senha } = body;
     return this.authService.loginUser({ matricula, senha });
   }

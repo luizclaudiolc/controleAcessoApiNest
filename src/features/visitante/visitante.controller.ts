@@ -17,8 +17,11 @@ import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
 import { CurrentUserDto } from 'src/core/auth/current-user.dto';
 import { CurrentUser } from 'src/core/auth/current-user.decorator';
 import { Rotas } from 'src/enums/rotas.enum';
+import { Roles } from 'src/core/auth/roles.decorator';
+import { ERoles } from 'src/enums/roles.enum';
 
 @UseGuards(JwtAuthGuard)
+@Roles(ERoles.ADMIN, ERoles.PORTEIRO)
 @ApiTags(Rotas.visitante)
 @Controller(Rotas.visitante)
 export class VisitanteController {
