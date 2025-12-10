@@ -21,10 +21,11 @@ import { MoradorService } from './morador.service';
 import { CurrentUserDto } from 'src/core/auth/current-user.dto';
 import { CurrentUser } from 'src/core/auth/current-user.decorator';
 import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
+import { Rotas } from 'src/enums/rotas.enum';
 
 @UseGuards(JwtAuthGuard)
-@ApiTags('morador')
-@Controller('morador')
+@ApiTags(Rotas.moradores)
+@Controller(Rotas.moradores)
 export class MoradorController {
   constructor(private readonly moradorService: MoradorService) {}
 

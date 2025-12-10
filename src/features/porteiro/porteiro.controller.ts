@@ -11,13 +11,14 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreatePorteiroDto } from './dto/create-morador.dto';
 import { UpdatePorteiroDto } from './dto/update-morador.dto';
 import { PorteiroService } from './porteiro.service';
+import { Rotas } from 'src/enums/rotas.enum';
 
-@Controller('porteiro')
+@ApiTags(Rotas.porteiro)
+@Controller(Rotas.porteiro)
 export class PorteiroController {
   constructor(private readonly porteiroService: PorteiroService) {}
 
   @Post()
-  @ApiTags('Porteiro')
   @ApiBody({ type: CreatePorteiroDto })
   @ApiResponse({ status: 201, description: 'Porteiro criado com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
@@ -26,7 +27,6 @@ export class PorteiroController {
   }
 
   @Get()
-  @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Lista todos os porteiros' })
   @ApiResponse({ status: 200, description: 'Lista de porteiros' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
@@ -36,7 +36,6 @@ export class PorteiroController {
   }
 
   @Get(':id')
-  @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Obtém um porteiro pelo ID' })
   @ApiResponse({ status: 200, description: 'Porteiro encontrado' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
@@ -47,7 +46,6 @@ export class PorteiroController {
   }
 
   @Patch(':id')
-  @ApiTags('Porteiro')
   @ApiBody({ type: UpdatePorteiroDto })
   @ApiOperation({ summary: 'Atualiza um porteiro pelo ID' })
   @ApiResponse({ status: 200, description: 'Porteiro atualizado com sucesso' })
@@ -62,7 +60,6 @@ export class PorteiroController {
   }
 
   @Delete(':id')
-  @ApiTags('Porteiro')
   @ApiOperation({ summary: 'Deleta um porteiro pelo ID' })
   @ApiResponse({ status: 200, description: 'Porteiro deletado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })

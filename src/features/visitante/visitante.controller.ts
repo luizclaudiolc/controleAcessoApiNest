@@ -16,10 +16,11 @@ import { VisitanteService } from './visitante.service';
 import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';
 import { CurrentUserDto } from 'src/core/auth/current-user.dto';
 import { CurrentUser } from 'src/core/auth/current-user.decorator';
+import { Rotas } from 'src/enums/rotas.enum';
 
 @UseGuards(JwtAuthGuard)
-@ApiTags('visitante')
-@Controller('visitante')
+@ApiTags(Rotas.visitante)
+@Controller(Rotas.visitante)
 export class VisitanteController {
   constructor(private readonly visitanteService: VisitanteService) {}
 

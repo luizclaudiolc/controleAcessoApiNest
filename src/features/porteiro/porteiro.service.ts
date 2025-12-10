@@ -4,6 +4,7 @@ import { CreatePorteiroDto } from './dto/create-morador.dto';
 import { UpdatePorteiroDto } from './dto/update-morador.dto';
 
 import { _hash, _salt } from 'src/core/encriptKey/encriptPassword';
+import { formatDate } from 'src/shared/helpers';
 
 @Injectable()
 export class PorteiroService {
@@ -48,19 +49,7 @@ export class PorteiroService {
     if (porteiro.deleteAt) {
       throw new BadRequestException({
         success: false,
-        message: `Porteiro com ID '${id}' foi excluído na data '${new Intl.DateTimeFormat(
-          'pt-BR',
-          {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          },
-        )
-          .format(new Date(porteiro.deleteAt))
-          .replace(',', ' às')}'.`,
+        message: `Porteiro com matrícula '${porteiro.matricula}' foi excluído na data '${formatDate(porteiro.deleteAt)}'.`,
         errors: null,
         timestamp: new Date().toISOString(),
       });
@@ -129,6 +118,28 @@ export class PorteiroService {
   }
 
   async deletePorteiro(id: number) {
+    const porteiro = await this.prisma.porteiro.findUnique({
+      where: { id },
+    });
+
+    if (!porteiro) {
+      throw new BadRequestException({
+        success: false,
+        message: `Porteiro com ID '${id}' não encontrado.`,
+        errors: null,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (porteiro.deleteAt) {
+      throw new BadRequestException({
+        success: false,
+        message: `Porteiro com matrícula '${porteiro.matricula}' já foi excluído na data '${formatDate(porteiro.deleteAt)}'.`,
+        errors: null,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     return await this.prisma.porteiro.update({
       where: { id },
       data: { deleteAt: new Date() },
