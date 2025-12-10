@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
-import { CreatePorteiroDto } from './dto/create-morador.dto';
-import { UpdatePorteiroDto } from './dto/update-morador.dto';
+import { CreatePorteiroDto } from './dto/create-porteiro.dto';
+import { UpdatePorteiroDto } from './dto/update-porteiro.dto';
 
 import { _hash, _salt } from 'src/core/encriptKey/encriptPassword';
 import { formatDate } from 'src/shared/helpers';

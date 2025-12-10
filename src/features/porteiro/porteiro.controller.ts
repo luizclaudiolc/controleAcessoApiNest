@@ -9,8 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreatePorteiroDto } from './dto/create-morador.dto';
-import { UpdatePorteiroDto } from './dto/update-morador.dto';
+import { CreatePorteiroDto } from './dto/create-porteiro.dto';
+import { UpdatePorteiroDto } from './dto/update-porteiro.dto';
 import { PorteiroService } from './porteiro.service';
 import { Rotas } from 'src/enums/rotas.enum';
 import { JwtAuthGuard } from 'src/core/auth/jwt-auth.guard';

@@ -4,12 +4,17 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 
 export class CreateCarroDto {
   @IsString()
   @IsNotEmpty()
+  @Matches(/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z0-9][0-9]{2})$/, {
+    message:
+      'A placa deve seguir o formato ABC1D23 (Mercosul) ou ASD0102 (modelo antigo), com letras maiúsculas e números',
+  })
   @ApiProperty({ example: 'ABC1D23', description: 'Placa do veículo (única)' })
   placa: string;
 

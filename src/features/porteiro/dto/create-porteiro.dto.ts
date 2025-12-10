@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Roles } from '@prisma/client';
-import { IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 export class CreatePorteiroDto {
   @IsString()
@@ -15,10 +21,12 @@ export class CreatePorteiroDto {
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'senhaSegura123', description: 'Senha do porteiro' })
+  @ApiProperty({ example: 'SenhaSegura123', description: 'Senha do porteiro' })
   senha: string;
 
-  @ApiProperty({ example: ['PORTEIRO'], description: 'Roles do porteiro' })
+  @IsArray()
+  @IsEnum(Roles, { each: true })
   @IsNotEmpty()
+  @ApiProperty({ example: ['PORTEIRO'], description: 'Roles do porteiro' })
   roles: Roles[];
 }
