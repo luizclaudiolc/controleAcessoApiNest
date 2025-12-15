@@ -17,7 +17,7 @@ export class VisitanteService {
     return p && p.length > 0 ? p : undefined;
   }
 
-  async create(createVisitanteDto: CreateVisitanteDto, porteiroId: number) {
+  async create(createVisitanteDto: CreateVisitanteDto, porteiroId: string) {
     const { nome, documento, carro, registro, ...rest } = createVisitanteDto;
     const placaCarro = this.normalizePlaca(carro?.placa);
     const placaRegistro = this.normalizePlaca(registro?.placa);
@@ -39,6 +39,7 @@ export class VisitanteService {
             documento,
             telefone: rest.telefone,
             descricao: rest.descricao,
+            criadoPorId: porteiroId,
           },
         });
       }
@@ -137,17 +138,12 @@ export class VisitanteService {
         data: {
           ...visitante,
           carros: todosCarros,
-          registroAtual: novoRegistro,
-          historicoRegistros: todosRegistros,
-          totalVisitas: todosRegistros.filter((r) => r.dataHoraSaida !== null)
-            .length,
-          dentroDoCondominio: true,
         },
       };
     });
   }
 
-  async registrarSaida(visitanteId: number, porteiroId: number) {
+  async registrarSaida(visitanteId: string, porteiroId: string) {
     return await this.prismaService.$transaction(async (tx) => {
       const visitante = await tx.visitante.findUnique({
         where: { id: visitanteId },
@@ -303,7 +299,6 @@ export class VisitanteService {
 
     const visitantesFormatados = visitantes.map((v) => {
       const registroAberto = v.registros[0];
-      console.log('Registro: ', registroAberto);
 
       return {
         id: v.id,
@@ -331,7 +326,7 @@ export class VisitanteService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const visitante = await this.prismaService.visitante.findUnique({
       where: { id },
       include: {
@@ -380,6 +375,20 @@ export class VisitanteService {
     });
 
     const registroAberto = visitante.registros[0] || null;
+    const ultimaAtualizacaoPor = await this.prismaService.porteiro.findFirst({
+      where: {
+        registros: {
+          some: {
+            visitanteId: id,
+          },
+        },
+      },
+      select: {
+        id: true,
+        nome: true,
+        matricula: true,
+      },
+    });
 
     return {
       id: visitante.id,
@@ -398,6 +407,7 @@ export class VisitanteService {
             porteiro: registroAberto.porteiro,
           }
         : null,
+      ultimaAtualizacaoPor,
       totalVisitas,
       dentroDoCondominio: registroAberto !== null,
       createdAt: visitante.createdAt,
@@ -406,9 +416,9 @@ export class VisitanteService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateVisitanteDto: UpdateVisitanteDto,
-    porteiroId: number,
+    porteiroId: string,
   ) {
     const { nome, documento, telefone, descricao, carro } = updateVisitanteDto;
     const placa = this.normalizePlaca(carro?.placa);
@@ -465,7 +475,8 @@ export class VisitanteService {
             telefone !== undefined ? telefone : visitanteExistente.telefone,
           descricao:
             descricao !== undefined ? descricao : visitanteExistente.descricao,
-          ultimaAtualizacaoPor: porteiroId,
+          porteiroId: porteiroId,
+          atualizadoPorId: porteiroId,
         },
       });
 
@@ -531,13 +542,16 @@ export class VisitanteService {
         data: {
           ...visitanteAtualizado,
           carros: todosCarros,
-          porteiroResponsavel: porteiroExistente.nome,
+          ultimaAtualizacaoPor: {
+            nome: porteiroExistente.nome,
+            matricula: porteiroExistente.matricula,
+          },
         },
       };
     });
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const visitante = await this.prismaService.visitante.findUnique({
       where: { deleteAt: null, id },
     });

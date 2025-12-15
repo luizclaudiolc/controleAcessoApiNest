@@ -26,7 +26,7 @@ export class PorteiroService {
     });
   }
 
-  async getPorteiroById(id: number) {
+  async getPorteiroById(id: string) {
     const porteiro = await this.prisma.porteiro.findUnique({
       where: { id },
       select: {
@@ -88,7 +88,7 @@ export class PorteiroService {
     });
   }
 
-  async updatePorteiro(id: number, porteiro: UpdatePorteiroDto) {
+  async updatePorteiro(id: string, porteiro: UpdatePorteiroDto) {
     const matricula = this.normalizeMatricula(porteiro.matricula!);
 
     const existingPorteiro = await this.prisma.porteiro.findFirst({
@@ -117,7 +117,7 @@ export class PorteiroService {
     });
   }
 
-  async deletePorteiro(id: number) {
+  async deletePorteiro(id: string) {
     const porteiro = await this.prisma.porteiro.findUnique({
       where: { id },
     });

@@ -39,9 +39,9 @@ export class MoradorController {
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async create(
     @Body() createMoradorDto: CreateMoradorDto,
-    @CurrentUser() { id, matricula, nome }: CurrentUserDto,
+    @CurrentUser() { id }: CurrentUserDto,
   ) {
-    return await this.moradorService.create(createMoradorDto);
+    return await this.moradorService.create(createMoradorDto, id);
   }
 
   @Get()
@@ -57,7 +57,7 @@ export class MoradorController {
   @ApiResponse({ status: 200, description: 'Morador encontrado' })
   @ApiResponse({ status: 404, description: 'Morador não encontrado' })
   async findOne(@Param('id') id: string) {
-    return await this.moradorService.findOne(+id);
+    return await this.moradorService.findOne(id);
   }
 
   @Patch(':id')
@@ -70,7 +70,7 @@ export class MoradorController {
     @Param('id') id: string,
     @Body() updateMoradorDto: UpdateMoradorDto,
   ) {
-    return await this.moradorService.update(+id, updateMoradorDto);
+    return await this.moradorService.update(id, updateMoradorDto);
   }
 
   @Delete(':id')
@@ -79,6 +79,6 @@ export class MoradorController {
   @ApiResponse({ status: 200, description: 'Morador removido com sucesso' })
   @ApiResponse({ status: 404, description: 'Morador não encontrado' })
   async remove(@Param('id') id: string) {
-    return await this.moradorService.remove(+id);
+    return await this.moradorService.remove(id);
   }
 }

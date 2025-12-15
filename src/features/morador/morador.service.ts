@@ -24,7 +24,10 @@ export class MoradorService {
     return p && p.length > 0 ? p : undefined;
   }
 
-  async create(createMoradorDto: CreateMoradorDto): Promise<MoradorComCarro> {
+  async create(
+    createMoradorDto: CreateMoradorDto,
+    porteiroId: string,
+  ): Promise<MoradorComCarro> {
     const { nome, bloco, apartamento, carro, ...rest } = createMoradorDto;
 
     const placa = this.normalizePlaca(carro?.placa);
@@ -51,6 +54,7 @@ export class MoradorService {
             nome,
             bloco,
             apartamento,
+            criadoPorId: porteiroId,
             ...rest,
           },
         });
@@ -86,7 +90,7 @@ export class MoradorService {
       },
     });
 
-    const mapa = new Map<number, any[]>();
+    const mapa = new Map<string, any[]>();
     carros.forEach((c) => {
       const ownerId = c.donoId;
       if (ownerId === null) return;
@@ -101,7 +105,7 @@ export class MoradorService {
     }));
   }
 
-  async findOne(id: number): Promise<MoradorComCarro> {
+  async findOne(id: string): Promise<MoradorComCarro> {
     const morador = await this.prismaService.morador.findUnique({
       where: { id },
     });
@@ -123,7 +127,7 @@ export class MoradorService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateMoradorDto: UpdateMoradorDto,
   ): Promise<MoradorComCarro> {
     const { nome, bloco, apartamento, carro, ...rest } = updateMoradorDto;
@@ -220,7 +224,7 @@ export class MoradorService {
     return { ...morador, carro: carros };
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     return await this.prismaService.$transaction(async (tx) => {
       await tx.carro.deleteMany({
         where: { donoId: id, donoTipo: 'MORADOR' },

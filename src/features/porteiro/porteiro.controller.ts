@@ -48,7 +48,7 @@ export class PorteiroController {
   @ApiResponse({ status: 404, description: 'Porteiro não encontrado' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async getPorteiroById(@Param('id') id: string) {
-    return await this.porteiroService.getPorteiroById(+id);
+    return await this.porteiroService.getPorteiroById(id);
   }
 
   @Patch(':id')
@@ -62,7 +62,7 @@ export class PorteiroController {
     @Param('id') id: string,
     @Body() updatePorteiroDto: UpdatePorteiroDto,
   ) {
-    return await this.porteiroService.updatePorteiro(+id, updatePorteiroDto);
+    return await this.porteiroService.updatePorteiro(id, updatePorteiroDto);
   }
 
   @Delete(':id')
@@ -72,6 +72,6 @@ export class PorteiroController {
   @ApiResponse({ status: 404, description: 'Porteiro não encontrado' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async deletePorteiro(@Param('id') id: string) {
-    return await this.porteiroService.deletePorteiro(+id);
+    return await this.porteiroService.deletePorteiro(id);
   }
 }

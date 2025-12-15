@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Roles } from '@prisma/client';
-import {
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreatePorteiroDto {
   @IsString()

@@ -1,5 +1,5 @@
 export class CurrentUserDto {
-  id: number;
+  id: string;
   matricula: string;
   nome: string;
 }

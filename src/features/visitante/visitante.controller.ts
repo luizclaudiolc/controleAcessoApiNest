@@ -65,7 +65,7 @@ export class VisitanteController {
   @ApiParam({ name: 'id', type: 'number', description: 'ID do visitante' })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.visitanteService.findOne(+id);
+    return this.visitanteService.findOne(id);
   }
 
   @ApiOperation({ summary: 'Atualiza um visitante' })
@@ -83,7 +83,7 @@ export class VisitanteController {
     @Body() updateVisitanteDto: UpdateVisitanteDto,
     @CurrentUser() { id: porteiroId }: CurrentUserDto,
   ) {
-    return this.visitanteService.update(+id, updateVisitanteDto, porteiroId);
+    return this.visitanteService.update(id, updateVisitanteDto, porteiroId);
   }
 
   @ApiOperation({ summary: 'Remove um visitante' })
@@ -92,7 +92,7 @@ export class VisitanteController {
   @ApiResponse({ status: 404, description: 'Visitante não encontrado' })
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.visitanteService.remove(+id);
+    return this.visitanteService.remove(id);
   }
 
   @Post(':id/saida')
@@ -108,6 +108,6 @@ export class VisitanteController {
     @Param('id') id: string,
     @CurrentUser() { id: porteiroId }: CurrentUserDto,
   ) {
-    return this.visitanteService.registrarSaida(+id, porteiroId);
+    return this.visitanteService.registrarSaida(id, porteiroId);
   }
 }

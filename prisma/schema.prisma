@@ -1,4 +1,3 @@
-// ...existing code...
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,59 +23,69 @@ enum Roles {
 }
 
 model Morador {
-  id          Int       @id @default(autoincrement())
-  nome        String
-  bloco       String?
-  apartamento String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deleteAt    DateTime?
+  id              String    @id @default(uuid())
+  nome            String
+  bloco           String?
+  apartamento     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deleteAt        DateTime?
+  carros          Carro[]
+  criadoPorId     String?
+  criadoPor       Porteiro? @relation("MoradorCriacao", fields: [criadoPorId], references: [id])
+  atualizadoPorId String?
+  atualizadoPor   Porteiro? @relation("MoradorAtualizacao", fields: [atualizadoPorId], references: [id])
 }
 
 model Visitante {
-  id                   Int        @id @default(autoincrement())
-  nome                 String
-  documento            String?    @unique
-  telefone             String?
-  descricao            String?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
-  deleteAt             DateTime?
-  registros            Registro[]
-  ultimaAtualizacaoPor Int?
-  porteiroAtualizacao  Porteiro?  @relation("VisitanteAtualizacoes", fields: [ultimaAtualizacaoPor], references: [id])
-  porteiro             Porteiro?  @relation(fields: [porteiroId], references: [id])
-  porteiroId           Int?
+  id              String     @id @default(uuid())
+  nome            String
+  documento       String?    @unique
+  telefone        String?
+  descricao       String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deleteAt        DateTime?
+  registros       Registro[]
+  carros          Carro[]
+  criadoPorId     String?
+  criadoPor       Porteiro?  @relation("VisitanteCriacao", fields: [criadoPorId], references: [id])
+  atualizadoPorId String?
+  atualizadoPor   Porteiro?  @relation("VisitanteAtualizacao", fields: [atualizadoPorId], references: [id])
+  porteiroId      String?
+  porteiro        Porteiro?  @relation("RegistrosVisitante", fields: [porteiroId], references: [id])
 }
 
 model Carro {
-  id     Int     @id @default(autoincrement())
-  placa  String  @unique
-  modelo String?
-  cor    String?
-
-  donoId   Int
-  donoTipo DonoTipo
-
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deleteAt  DateTime?
-  registros Registro[]
+  id          String     @id @default(uuid())
+  placa       String     @unique
+  modelo      String?
+  cor         String?
+  donoId      String
+  donoTipo    DonoTipo
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deleteAt    DateTime?
+  registros   Registro[]
+  morador     Morador?   @relation(fields: [moradorId], references: [id])
+  moradorId   String?
+  visitante   Visitante? @relation(fields: [visitanteId], references: [id])
+  visitanteId String?
 
   @@index([donoTipo, donoId])
 }
 
 model Registro {
-  id              Int          @id @default(autoincrement())
+  id              String       @id @default(uuid())
   tipo            TipoRegistro
-  carroId         Int?
+  carroId         String?
   carro           Carro?       @relation(fields: [carroId], references: [id], onDelete: SetNull)
   placa           String?
-  visitanteId     Int?
+  visitanteId     String?
   visitante       Visitante?   @relation(fields: [visitanteId], references: [id], onDelete: SetNull)
   dataHoraEntrada DateTime
   dataHoraSaida   DateTime?
-  porteiroId      Int?
+  porteiroId      String?
   porteiro        Porteiro?    @relation(fields: [porteiroId], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -89,7 +98,7 @@ model Registro {
 }
 
 model Porteiro {
-  id                    Int         @id @default(autoincrement())
+  id                    String      @id @default(uuid())
   nome                  String
   matricula             String      @unique
   senha                 String
@@ -98,6 +107,9 @@ model Porteiro {
   updatedAt             DateTime    @updatedAt
   deleteAt              DateTime?
   registros             Registro[]
-  visitantes            Visitante[]
-  visitantesAtualizados Visitante[] @relation("VisitanteAtualizacoes")
+  visitantesRegistrados Visitante[] @relation("RegistrosVisitante")
+  visitantesCriados     Visitante[] @relation("VisitanteCriacao")
+  visitantesAtualizados Visitante[] @relation("VisitanteAtualizacao")
+  moradores             Morador[]   @relation("MoradorCriacao")
+  moradoresAtualizados  Morador[]   @relation("MoradorAtualizacao")
 }
