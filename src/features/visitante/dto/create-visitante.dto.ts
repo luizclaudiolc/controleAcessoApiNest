@@ -28,7 +28,7 @@ export class CreateVisitanteDto {
   @IsString()
   @IsNotEmpty({ message: 'O nome do visitante é obrigatório.' })
   @ApiProperty({ example: 'Maria Oliveira', description: 'Nome do visitante' })
-  nome: string;
+  nome: string = '';
 
   @IsString()
   @IsNotEmpty({ message: 'O documento do visitante é obrigatório.' })
@@ -36,7 +36,7 @@ export class CreateVisitanteDto {
     example: '123.456.789-00',
     description: 'Documento do visitante',
   })
-  documento: string;
+  documento: string = '';
 
   @IsString()
   @IsPhoneNumber('BR', {
@@ -72,5 +72,5 @@ export class CreateVisitanteDto {
     type: CreateRegistroDto,
     description: 'Informações adicionais do registro de entrada',
   })
-  registro: CreateRegistroDto;
+  registro: CreateRegistroDto = new CreateRegistroDto();
 }

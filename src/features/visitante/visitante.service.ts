@@ -26,9 +26,9 @@ export class VisitanteService {
       let visitante: Visitante | null = null;
       let carroParaUsar: Carro | null = null;
 
-      if (documento) {
+      if (documento && nome) {
         visitante = await tx.visitante.findUnique({
-          where: { documento },
+          where: { documento, nome },
         });
       }
 
@@ -215,8 +215,9 @@ export class VisitanteService {
           formatado: `${Math.floor(tempoMinutos / 60)}h ${tempoMinutos % 60}m`,
         },
         historicoRegistros: todosRegistros,
-        totalVisitas: todosRegistros.filter((r) => r.dataHoraSaida !== null)
-          .length,
+        totalVisitas: todosRegistros.filter(
+          ({ dataHoraSaida }) => dataHoraSaida !== null,
+        ).length,
       };
     });
   }
